@@ -7,7 +7,7 @@ int: L;                                        % max ride time
 set of int: vehicles = 0..K;                   % set of all vehicles
 set of int: REQ = 0..2*n+1;                    % set of all requests
 set of int: P = REQ[1]..REQ[n];                % pick up requests
-set of int: D = REQ[n+1]..REQ[2*n];            % drop of requests
+set of int: D = REQ[n+1]..REQ[2*n];            % drop off requests
 array[vehicles] of int: capacity;              % vehicle capacity
 array[vehicles] of int: max_r_time;            % maximum allowed time for each route
 array[REQ] of int: load;                       % load (number of passengers) for each request
