@@ -1,0 +1,11 @@
+n = 1;                                        % number of requests
+K = 1;                                        % number of vehicles
+L = 300;                                      % max ride time
+capacity = array1d(0..0,[3]);                                % vehicle capacity
+max_r_time = array1d(0..0,[300]);            % maximum allowed time for each route
+load = array1d(0..3,[0, 1, -1, 0]);                       % load (number of passengers) for each request
+service_time = array1d(0..3,[0, 5, 5, 0]);               % time required for pickup/dropoff at each request
+earliest_pickup = array1d(0..3,[0, 1, 1, 0]);            % earliest pickup time for each request
+latest_dropoff = array1d(0..3,[300, 20, 20, 300]);             % latest dropoff time for each request
+t_cost = array3d(0..3,0..3,0..0,[0, 3, 5, 0, 3, 0, 4, 3, 3, 5, 0, 3, 0, 3, 5, 0]);      % travel cost matrix between all request points
+t_time = array2d(0..3,0..3,[0, 3, 5, 0, 3, 0, 4, 3, 3, 5, 0, 3, 0, 3, 5, 0]);                % travel time matrix between all request points
