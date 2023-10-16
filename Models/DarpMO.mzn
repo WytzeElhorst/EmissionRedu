@@ -4,7 +4,7 @@
 int: n;                                        % number of requests
 int: K;                                        % number of vehicles
 int: L;                                        % max ride time
-int: timelimit = 5;                          % limits the maximum time a customer has to wait for a vehicle
+int: timelimit = 60;                           % limits the maximum time a customer has to wait for a vehicle
 float: w1 = 1;                                 % weight for the first objective
 float: w2 = 0.18;                              % weight for the second objective
 set of int: vehicles = 0..K-1;                 % set of all vehicles

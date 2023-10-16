@@ -10,7 +10,6 @@ set of int: P = 1..n;                          % pick up requests
 set of int: D = n+1..2*n;                      % drop off requests
 array[vehicles] of int: capacity;              % vehicle capacity
 array[vehicles] of int: max_r_time;            % maximum allowed time for each route
-array[vehicles] of float: mileage;               % load (number of passengers) for each request
 array[REQ] of int: load;                       % load (number of passengers) for each request
 array[REQ] of int: service_time;               % time required for pickup/dropoff at each request
 array[REQ] of int: earliest_pickup;            % earliest pickup time for each request

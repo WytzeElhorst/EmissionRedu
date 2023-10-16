@@ -8,10 +8,10 @@ gecode = Solver.lookup("gurobi")
 instance = Instance(gecode, DARP)
 
 # Read data
-Darpinstance = Darp.readfile("Data/5km8hours10n.txt")
+Darpinstance = Darp.readfile("Data/5km8hours3n.txt", 3)
 
 # Write data into minizinc dzn file
-Darpinstance.writefile("output3k050810")
+Darpinstance.writefile("output1k05082n")
 
 
 def rundarp():
