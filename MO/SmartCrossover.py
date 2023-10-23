@@ -149,7 +149,7 @@ def guidedcrossover(problem, X):
                     break
 
             for i in range(index + 1, len(oroutes[randcar])):                        # if latest drop off of index request is later than ld, insert ld at this index
-                if problem.latest_dropoff[oroutes[randcar][i]] > ldtime:
+                if problem.latest_dropoff[oroutes[randcar][i]] > ldtime + 30:
                     oroutes[randcar].insert(i, ld)
                     break
                 if i == len(oroutes[randcar]) - 1:

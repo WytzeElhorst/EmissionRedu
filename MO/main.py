@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import Darp
 from HeuristicSampling import HeuristicSampling
@@ -5,6 +7,7 @@ from SmartSampling import SmartSampling
 from CustomCrossover import CustomCrossover
 from SmartCrossover import SmartCrossover
 from CustomMutation import CustomMutation
+from SmartMutation import SmartMutation
 from CustomRepair import CustomRepair
 from SmartRepair import SmartRepair
 from MODARP import DARP
@@ -14,7 +17,6 @@ from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.optimize import minimize
 from pymoo.visualization.scatter import Scatter
 import timeit
-
 
 # Read data
 start = timeit.default_timer()
@@ -30,7 +32,8 @@ darp = Darp.readfile("../Data/" + scenario + "/" + filename + ".txt", bigcar, me
 # darp.writefile("../output" + filename + str(vehiclenum))
 darp.writefile("../Data/" + scenario + "/minizinc/" + filename + str(vehiclenum))
 f = open("../Data/" + scenario + "/output/" + filename + str(vehiclenum) + "pareto.csv", "w")
-moDarp = DARP(darp.n, darp.k, darp.L, darp.capacity, darp.max_r_time, darp.load, darp.service_time, darp.earliest_pickup, darp.latest_dropoff, darp.t_cost, darp.t_emis, darp.t_time)
+moDarp = DARP(darp.n, darp.k, darp.L, darp.capacity, darp.max_r_time, darp.load, darp.service_time,
+              darp.earliest_pickup, darp.latest_dropoff, darp.t_cost, darp.t_emis, darp.t_time)
 
 # Run NSGA-III algorithm
 
@@ -40,7 +43,7 @@ if smart:
         pop_size=500,
         sampling=SmartSampling(500),
         crossover=SmartCrossover(),
-        mutation=CustomMutation(),
+        mutation=SmartMutation(),
         repair=SmartRepair(),
         ref_dirs=get_reference_directions("das-dennis", 3, n_partitions=24),
         n_offsprings=50
@@ -56,9 +59,6 @@ else:
         ref_dirs=get_reference_directions("das-dennis", 3, n_partitions=12),
         n_offsprings=50
     )
-
-
-
 
 res = minimize(moDarp,
                algorithm,
@@ -79,7 +79,7 @@ mincost = 100000
 minemi = 100000
 minwait = 100000
 for i in range(len(F)):
-    print("Operational costs: €",round(res.F[i][0], 2))
+    print("Operational costs: €", round(res.F[i][0], 2))
     print("Total Emission: ", res.F[i][1], "kg CO2")
     print("Waiting time: ", res.F[i][2], " minutes")
     data = f"{round(res.F[i][0], 2)},{res.F[i][1]},{res.F[i][2]}"
@@ -107,15 +107,15 @@ for i in range(len(F)):
     for q in moDarp.REQ:
         for j in moDarp.REQ:
             for k in moDarp.vehicles:
-                routematrix[k][q][j] = x[j + reqnum*q + reqnum*reqnum*k]    # map routes to 3D array
+                routematrix[k][q][j] = x[j + reqnum * q + reqnum * reqnum * k]  # map routes to 3D array
     routes = moDarp.construct_routes(routematrix)
-    #print("Routes: ", moDarp.construct_routes(routematrix))
-    #print("routetimes: ", moDarp.routetimes(routes))
+    # print("Routes: ", moDarp.construct_routes(routematrix))
+    # print("routetimes: ", moDarp.routetimes(routes))
     print(" ")
 
-print("Avarage operational cost: €", round(avaragecost/len(F), 2))
-print("Total Emission: ", avarageemi/len(F), "kg CO2")
-print("Waiting time: ", avaragewait/len(F), " minutes")
+print("Avarage operational cost: €", round(avaragecost / len(F), 2))
+print("Total Emission: ", avarageemi / len(F), "kg CO2")
+print("Waiting time: ", avaragewait / len(F), " minutes")
 print(" ")
 
 print("Max operational cost: €", round(maxcost, 2))
@@ -128,7 +128,7 @@ print("Min Total Emission: ", minemi, "kg CO2")
 print("Min Waiting time: ", minwait, " minutes")
 print(" ")
 
-#calculate best overal solution
+# calculate best overal solution
 bestsolution = 10000
 index = 0
 for i in range(len(F)):
@@ -153,7 +153,7 @@ routematrix = np.zeros((moDarp.k, reqnum, reqnum))
 for q in moDarp.REQ:
     for j in moDarp.REQ:
         for k in moDarp.vehicles:
-            routematrix[k][q][j] = x[j + reqnum*q + reqnum*reqnum*k]    # map routes to 3D array
+            routematrix[k][q][j] = x[j + reqnum * q + reqnum * reqnum * k]  # map routes to 3D array
 routes = moDarp.construct_routes(routematrix)
 print("Routes: ", moDarp.construct_routes(routematrix))
 
@@ -171,4 +171,11 @@ plt.title('Pareto front with colour intensity for Emission')
 plt.show()
 
 # 3D pareto front
-#Scatter().add(res.F).show()
+# Scatter().add(res.F).show()
+
+
+folder_path = '/path/to/your/folder'  # zelf aanpassen naar juiste path
+for filename in os.listdir(folder_path):
+    if os.path.isfile(os.path.join(folder_path, filename)):
+        f = open(folder_path + filename, "r")
+        # De rest van je code in deze loop

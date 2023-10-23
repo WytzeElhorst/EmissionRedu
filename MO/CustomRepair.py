@@ -19,7 +19,6 @@ def fixload(problem, route, cap):
                     if (route[i] - problem.n) in newroute:      # check if corresponding pick up request is in the route already
                         newroute.append(route[i])
                         curload += problem.load[i]
-                        # changed = True                        #turn on to see repair changes in terminalCustomRepair.py
                         del route[i]
                         break
             newroute.append(request)
