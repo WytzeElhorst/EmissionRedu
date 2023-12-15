@@ -64,7 +64,7 @@ def readfile(filepath, bcar, mcar, scar):
     load = [0]  # 0 at depot
     service_time = [0]  # 0 at depot
     earliest_pickup = [0]  # 0 at depot
-    latest_dropoff = [1440]  # 1440 at depot (24H)
+    latest_dropoff = [1500]  # 1440 at depot (25H)
     for i in range(n):  # pickups
         REQ.append(i + 1)
         P.append(i + 1)
@@ -85,7 +85,7 @@ def readfile(filepath, bcar, mcar, scar):
     load.append(0)
     service_time.append(0)
     earliest_pickup.append(0)
-    latest_dropoff.append(1440)  # 1440 at depot (24H)
+    latest_dropoff.append(1500)  # 1440 at depot (24H)
 
     # matrix parameters
     # At 60km/h 1 km = 1 minute

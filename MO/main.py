@@ -4,11 +4,10 @@ import numpy as np
 import Darp
 from HeuristicSampling import HeuristicSampling
 from SmartSampling import SmartSampling
-from CustomCrossover import CustomCrossover
+from PMXCrossover import PMXCrossover
 from SmartCrossover import SmartCrossover
 from CustomMutation import CustomMutation
 from SmartMutation import SmartMutation
-from CustomRepair import CustomRepair
 from SmartRepair import SmartRepair
 from MODARP import DARP
 from matplotlib import pyplot as plt
@@ -20,44 +19,44 @@ import timeit
 
 # Read data
 start = timeit.default_timer()
-bigcar = 0
-medcar = 1
-smallcar = 2
+bigcar = 8
+medcar = 8
+smallcar = 8
 vehiclenum = bigcar + medcar + smallcar
 scenario = "moderate"
-filename = "8h20km8n"
-generations = 1600
-smart = True
-darp = Darp.readfile("../Data/" + scenario + "/" + filename + ".txt", bigcar, medcar, smallcar)
-# darp.writefile("../output" + filename + str(vehiclenum))
-darp.writefile("../Data/" + scenario + "/minizinc/" + filename + str(vehiclenum))
-f = open("../Data/" + scenario + "/output/" + filename + str(vehiclenum) + "pareto.csv", "w")
+requestnum = 50
+generations = 2000
+smart = 100
+filename = "GA"
+guided = True
+if guided:
+    filename = "GGA"
+if smart > 0:
+    if smart < 100:
+        filename += "h"
+    else:
+        filename += "+"
+
+darp = Darp.readfile("../Data/" + scenario + "/" + scenario + str(requestnum) + ".txt", bigcar, medcar, smallcar)
+darp.writefile("../Data/" + scenario + "/minizinc/" + scenario + str(requestnum) + 'n' + str(vehiclenum))
+f = open("../Data/" + scenario + "/output/" + filename + str(requestnum) + 'n' + str(vehiclenum) + ".csv", "w")
 moDarp = DARP(darp.n, darp.k, darp.L, darp.capacity, darp.max_r_time, darp.load, darp.service_time,
               darp.earliest_pickup, darp.latest_dropoff, darp.t_cost, darp.t_emis, darp.t_time)
 
 # Run NSGA-III algorithm
+mut = CustomMutation()
+cross = SmartCrossover(smart)
+if guided:
+    mut = SmartMutation()
 
-if smart:
-    print("Smart Genetic Algorithm")
-    algorithm = NSGA3(
+algorithm = NSGA3(
         pop_size=500,
         sampling=SmartSampling(500),
-        crossover=SmartCrossover(),
-        mutation=SmartMutation(),
+        crossover=cross,
+        mutation=mut,
         repair=SmartRepair(),
         ref_dirs=get_reference_directions("das-dennis", 3, n_partitions=24),
-        n_offsprings=50
-    )
-else:
-    print("Original Genetic Algorithm")
-    algorithm = NSGA3(
-        pop_size=500,
-        sampling=HeuristicSampling(500),
-        crossover=CustomCrossover(),
-        mutation=CustomMutation(),
-        repair=SmartRepair(),
-        ref_dirs=get_reference_directions("das-dennis", 3, n_partitions=12),
-        n_offsprings=50
+        n_offsprings=100
     )
 
 res = minimize(moDarp,
@@ -100,17 +99,6 @@ for i in range(len(F)):
         minemi = res.F[i][1]
     if minwait > res.F[i][2]:
         minwait = res.F[i][2]
-    reqnum = len(moDarp.REQ)
-    routematrix = np.zeros((moDarp.k, reqnum, reqnum))
-    x = res.X[i]
-
-    for q in moDarp.REQ:
-        for j in moDarp.REQ:
-            for k in moDarp.vehicles:
-                routematrix[k][q][j] = x[j + reqnum * q + reqnum * reqnum * k]  # map routes to 3D array
-    routes = moDarp.construct_routes(routematrix)
-    # print("Routes: ", moDarp.construct_routes(routematrix))
-    # print("routetimes: ", moDarp.routetimes(routes))
     print(" ")
 
 print("Avarage operational cost: €", round(avaragecost / len(F), 2))
@@ -144,18 +132,8 @@ print("Best solution's operational cost: €", round(res.F[index][0], 2))
 print("Best solution's Total Emission: ", res.F[index][1], "kg CO2")
 print("Best solution's Waiting time: ", res.F[index][2], " minutes")
 print("Best solution score: ", bestsolution)
+print("Number of solutions: ", len(res.F))
 print("Runtime: ", stop - start)
-
-# show best route
-x = res.X[index]
-reqnum = len(moDarp.REQ)
-routematrix = np.zeros((moDarp.k, reqnum, reqnum))
-for q in moDarp.REQ:
-    for j in moDarp.REQ:
-        for k in moDarp.vehicles:
-            routematrix[k][q][j] = x[j + reqnum * q + reqnum * reqnum * k]  # map routes to 3D array
-routes = moDarp.construct_routes(routematrix)
-print("Routes: ", moDarp.construct_routes(routematrix))
 
 # 2D pareto front using colour mapping
 ob1v = F[:, 0]
@@ -172,10 +150,3 @@ plt.show()
 
 # 3D pareto front
 # Scatter().add(res.F).show()
-
-
-folder_path = '/path/to/your/folder'  # zelf aanpassen naar juiste path
-for filename in os.listdir(folder_path):
-    if os.path.isfile(os.path.join(folder_path, filename)):
-        f = open(folder_path + filename, "r")
-        # De rest van je code in deze loop

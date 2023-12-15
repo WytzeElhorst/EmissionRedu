@@ -1,3 +1,4 @@
+import numpy as np
 from pymoo.core.repair import Repair
 from copy import copy
 
@@ -34,6 +35,7 @@ def fixload(problem, route, cap):
 def swapfix(problem, route):
     n = problem.n
     fixed = False
+    routebackup = route.copy()
     depot = route[len(route) - 1]
     del route[len(route) - 1]
     newroute = []
@@ -51,9 +53,30 @@ def swapfix(problem, route):
                         fixed = True
     newroute.append(depot)
     if fixed:
-        print("og route ", route)
+        print("og route ", routebackup)
         print("new route ", newroute)
     return newroute
+
+
+def maptoroute(x, Darp):
+    n = Darp.n
+    routes = [[0] for _ in Darp.vehicles]   # add depot to each vehicle
+    for i in range(0, 2 * n):
+        routes[int(x[i+2*n])].append(int(x[i]))       # add next request to corresponding vehicle
+    for i in Darp.vehicles:                 # add depot to each vehicle
+        routes[i].append(2*n+1)
+    return routes
+
+
+def routetomap(routes, Darp):
+    sample = np.zeros(4 * Darp.n)
+    sindex = 0
+    for v in range(len(routes)):
+        for i in range(1, len(routes[v]) - 1):
+            sample[sindex] = routes[v][i]
+            sample[sindex + 2 * Darp.n] = v
+            sindex += 1
+    return sample
 
 
 class SmartRepair(Repair):
@@ -66,13 +89,11 @@ class SmartRepair(Repair):
         for i in range(n_individuals):
             # Perform mutation on the i-th individual
             individual = X[i, :]
-            matrix = problem.maptomatrix(individual)
-            routes = problem.construct_routes(matrix)
+            routes = maptoroute(individual, problem)
             for k in range(len(routes)):
                 newroute = fixload(problem, routes[k], problem.capacity[k])
                 newroute = swapfix(problem, newroute)
                 routes[k] = newroute
-            individual = problem.matrixtooutput(problem.routetomatrix(routes))
+            individual = routetomap(routes, problem)
             X[i, :] = individual
         return X
-

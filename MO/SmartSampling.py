@@ -42,22 +42,22 @@ def freevehicles(Darp, routes, req):
 
 
 def calculatepriority(Darp, curreq, fv, routes):
-    rand = random.randint(1, 20)
-    threshold = 6 * rand
     targettime = (Darp.earliest_pickup[curreq] + Darp.latest_dropoff[curreq]) / 2
     actualtime = 0
+    maxtime = max(Darp.latest_dropoff[1:-1]) + 60
     if len(routes[fv]) > 1:
         actualtime = Darp.earliest_pickup[routes[fv][1]]
     else:
-        return 60
+        return maxtime/Darp.k
     for i in range(2, len(routes[fv])):
         actualtime = max(actualtime + Darp.service_time[routes[fv][i]] + Darp.t_time[routes[fv][i-1], routes[fv][i]], Darp.earliest_pickup[routes[fv][i]])
     actualtime += Darp.service_time[curreq] + Darp.t_time[routes[fv][-1], curreq]
+    if actualtime > Darp.latest_dropoff[curreq]:
+        return 480
     return abs(targettime - actualtime)
 
 
 def createroutesample(Darp):
-    routematrix = np.zeros((Darp.k, len(Darp.REQ), len(Darp.REQ)))
     routes = list()
     for k in range(Darp.k):
         routes.append([0])  # each vehicle starts at depot
@@ -99,17 +99,13 @@ def createroutesample(Darp):
     for k in range(Darp.k):
         routes[k].append(2 * Darp.n + 1)  # each vehicle ends at depot
 
-    # generate matrix from routes
-    for k in range(Darp.k):
-        for i in range(len(routes[k]) - 1):
-            routematrix[k][routes[k][i]][routes[k][i + 1]] = 1
+    sample = np.zeros(4 * Darp.n)
+    sindex = 0
+    for v in range(len(routes)):
+        for i in range(1, len(routes[v]) - 1):
+            sample[sindex] = routes[v][i]
+            sample[sindex + 2 * Darp.n] = v
+            sindex += 1
 
-    # map 3D matrix to sample input
-    sample = np.zeros((2 * Darp.n + 2) * (2 * Darp.n + 2) * Darp.k, dtype=bool)
-    for i in Darp.REQ:
-        for j in Darp.REQ:
-            for k in Darp.vehicles:
-                sample[j + len(Darp.REQ) * i + len(Darp.REQ) * len(Darp.REQ) * k] = routematrix[k][i][
-                                                                                        j] == 1  # map routes to 3D array
     return sample
 

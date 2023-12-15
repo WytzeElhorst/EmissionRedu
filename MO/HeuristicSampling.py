@@ -47,10 +47,12 @@ def calculatepriority(Darp, curreq, fv, routes):
     if len(routes[fv]) > 1:
         actualtime = Darp.earliest_pickup[routes[fv][1]]
     else:
-        return targettime
+        return 60
     for i in range(2, len(routes[fv])):
         actualtime = max(actualtime + Darp.service_time[routes[fv][i]] + Darp.t_time[routes[fv][i-1], routes[fv][i]], Darp.earliest_pickup[routes[fv][i]])
     actualtime += Darp.service_time[curreq] + Darp.t_time[routes[fv][-1], curreq]
+    if actualtime > Darp.latest_dropoff[curreq]:
+        return 480
     return abs(targettime - actualtime)
 
 

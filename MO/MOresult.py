@@ -139,13 +139,13 @@ class MOresult:
 
         rcmap = matplotlib.cm.get_cmap('copper_r')
         plt.figure(figsize=(8, 6))
-        scatter = plt.scatter(ob1v, ob2v, c=ob3v, cmap=rcmap, marker='o', alpha=0.7, label='GA+')
-        scatter = plt.scatter(ob1v2, ob2v2, c=ob3v2, cmap=rcmap, marker='^', alpha=0.7, label='MIP')
+        scatter = plt.scatter(ob1v, ob2v, c=ob3v, cmap=rcmap, marker='o', alpha=0.7, label='Pareto 1')
+        scatter = plt.scatter(ob1v2, ob2v2, c=ob3v2, cmap=rcmap, marker='^', alpha=0.7, label='Pareto 2')
         cbar = plt.colorbar(scatter, label='Ride Duration', orientation='vertical')
         plt.xlabel('Operational cost')
         plt.legend()
         plt.ylabel("Emission")
-        plt.title('Pareto front with colour intensity for Ride duration')
+        plt.title('Pareto front with colour intensity for Ride Duration')
         plt.show()
 
     @staticmethod
@@ -169,10 +169,10 @@ class MOresult:
 
 
 path = "../Data/moderate/output/paretodata/"
-paretoga = MOresult.readfile(path + "GA_pareto_8n012.csv")
-pareto = MOresult.readfile(path + "MIP_Pareto_8n012.csv")
+paretoga = MOresult.readfile(path + "GGA+100n30.csv")
+pareto = MOresult.readfile(path + "GA+100n30.csv")
 newpareto = MOresult.remove_duplicates(pareto)
 nondom = MOresult.non_dominated(paretoga, newpareto)
 ndga, ndmip = MOresult.non_dominated_origins(paretoga, newpareto)
-MOresult.show2paretos(ndga, ndmip)
-#MOresult.show2paretos(paretoga, newpareto)
+#MOresult.show2paretos(ndga, ndmip)
+MOresult.show2paretos(paretoga, newpareto)

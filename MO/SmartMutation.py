@@ -2,28 +2,31 @@ import random
 import copy
 from pymoo.core.mutation import Mutation
 import numpy as np
-from CustomCrossover import CustomCrossover
 
 
 def randomswap(problem, routes):
     pickup1 = random.randint(1, problem.n)  # randomly pick 2 requests
     pickup2 = random.randint(1, problem.n)
+    v1 = 0
+    v2 = 0
     dropoff1 = pickup1 + problem.n
     dropoff2 = pickup2 + problem.n
-    for k in range(problem.k):
-        pindex1, pindex2, dindex1, dindex2 = 0, 0, 0, 0
+    pindex1, pindex2, dindex1, dindex2 = 0, 0, 0, 0
+    for k in problem.vehicles:
         if pickup1 in routes[k]:  # find indices of the requests
             pindex1 = routes[k].index(pickup1)
             dindex1 = routes[k].index(dropoff1)
+            v1 = k
         if pickup2 in routes[k]:
             pindex2 = routes[k].index(pickup2)
             dindex2 = routes[k].index(dropoff2)
-        if pindex1 != 0:  # perform swap
-            routes[k][pindex1] = pickup2
-            routes[k][dindex1] = dropoff2
-        if pindex2 != 0:
-            routes[k][pindex2] = pickup1
-            routes[k][dindex2] = dropoff1
+            v2 = k
+    if pindex1 != 0:  # perform swap
+        routes[v1][pindex1] = pickup2
+        routes[v1][dindex1] = dropoff2
+    if pindex2 != 0:
+        routes[v2][pindex2] = pickup1
+        routes[v2][dindex2] = dropoff1
             # convert to output
     return routes
 
@@ -41,15 +44,14 @@ def routeswap(problem, routes):
 def randmigration(problem, routes):
     pickup = random.randint(1, problem.n)
     dropoff = pickup + problem.n
-    for k in range(problem.k):                  # find and remove chosen request from current vehicle
+    for v in problem.vehicles:                  # find and remove chosen request from current vehicle
         pindex, dindex = 0, 0
-        if pickup in routes[k]:
-            pindex = routes[k].index(pickup)
-            dindex = routes[k].index(dropoff)
-            del routes[k][dindex]
-            del routes[k][pindex]
-            break
-    vehicle = random.randint(0, problem.k - 1)                  # pick random vehicle
+        if pickup in routes[v]:
+            pindex = routes[v].index(pickup)
+            dindex = routes[v].index(dropoff)
+            del routes[v][dindex]
+            del routes[v][pindex]
+    vehicle = random.randint(0, problem.k)                  # pick random vehicle
     newindex = random.randint(1, len(routes[vehicle]) - 1)      # pick a random index from the vehicle route
     routes[vehicle].insert(newindex, pickup)                    # insert pick up at this index
     dropindex = random.randint(newindex + 1, len(routes[vehicle]) - 1)      # do same for drop off
@@ -59,7 +61,7 @@ def randmigration(problem, routes):
 
 def timingswap(problem, routes):
     while True:
-        vehicle = random.randint(0, problem.k - 1)              # pick a random non-empty vehicle
+        vehicle = random.randint(0, problem.k)              # pick a random non-empty vehicle
         if len(routes[vehicle]) > 2:
             break
     index = random.randint(1, len(routes[vehicle]) - 2)     # pick a random non depot request
@@ -89,7 +91,7 @@ def routedistance(problem, route):
 
 def distanceswap(problem, routes):
     while True:
-        vehicle = random.randint(0, problem.k - 1)              # pick a random non-empty vehicle
+        vehicle = random.randint(0, problem.k)              # pick a random non-empty vehicle
         if len(routes[vehicle]) > 2:
             break
     index = random.randint(1, len(routes[vehicle]) - 2)     # pick a random non depot request
@@ -114,7 +116,7 @@ def distanceswap(problem, routes):
 
 def durationredu(problem, routes):
     while True:
-        vehicle = random.randint(0, problem.k - 1)              # pick a random non-empty vehicle
+        vehicle = random.randint(0, problem.k)              # pick a random non-empty vehicle
         if len(routes[vehicle]) > 2:
             break
     index = random.randint(1, len(routes[vehicle]) - 2)         # pick a random non depot request
@@ -162,7 +164,7 @@ def maxrouteredu(problem, routes):
             pickup = dropoff - problem.n
             pindex = routes[vehicle].index(pickup)
             del routes[vehicle][pindex]
-    vehicle = random.randint(0, problem.k - 1)
+    vehicle = random.randint(0, problem.k)
     for i in range(1, len(routes[vehicle])):
         if problem.latest_dropoff[pickup] < problem.latest_dropoff[routes[vehicle][i]]:
             routes[vehicle].insert(i, pickup)
@@ -181,8 +183,7 @@ class SmartMutation(Mutation):
         for i in range(n_individuals):
             # Perform mutation on the i-th individual
             individual = X[i, :]
-            matrix = problem.maptomatrix(individual)
-            routes = problem.construct_routes(matrix)
+            routes = maptoroute(individual, problem)
             rng = random.randint(1, 100)
             if rng <= 30:
                 routes = randomswap(problem, routes)
@@ -200,9 +201,29 @@ class SmartMutation(Mutation):
                 routes = maxrouteredu(problem, routes)
 
             # convert to output
-            individual = problem.matrixtooutput(problem.routetomatrix(routes))
+            individual = routetomap(routes, problem)
             X[i, :] = individual
 
         return X
+
+
+def routetomap(routes, Darp):
+    sample = np.zeros(4 * Darp.n)
+    sindex = 0
+    for v in range(len(routes)):
+        for i in range(1, len(routes[v]) - 1):
+            sample[sindex] = routes[v][i]
+            sample[sindex + 2 * Darp.n] = v
+            sindex += 1
+    return sample
+
+
+def maptoroute(x, Darp):
+    routes = [[0] for _ in Darp.vehicles]   # add depot to each vehicle
+    for i in range(0, 2 * Darp.n):
+        routes[int(x[i+2*Darp.n])].append(int(x[i]))       # add next request to corresponding vehicle
+    for i in Darp.vehicles:                 # add depot to each vehicle
+        routes[i].append(2*Darp.n+1)
+    return routes
 
 
