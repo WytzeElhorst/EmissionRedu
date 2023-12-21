@@ -1,4 +1,7 @@
+import csv
+
 import matplotlib
+import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -18,6 +21,106 @@ def showpareto(resultlist):
     plt.xlabel('Operational cost')
     plt.ylabel("Ride Duration")
     plt.title('Pareto front with colour intensity for Emission')
+    plt.show()
+
+
+def get_best_solution(resultlist):
+    weights = (0.2, 1, 0.2)
+    best_solution = None
+    best_score = float('inf')  # Initialize with a large value
+
+    for result in resultlist:
+        # Calculate the weighted sum of objectives
+        score = weights[0] * result.cost + weights[1] * result.emission + weights[2] * result.wait
+
+        # Update the best solution if the current score is better
+        if score < best_score:
+            best_solution = result
+            best_score = score
+
+    return best_solution
+
+
+def get_score(result):
+    weights = (0.2, 1, 0.2)
+    score = weights[0] * result.cost + weights[1] * result.emission + weights[2] * result.wait
+    return score
+
+
+def calculate_spread(pareto_front):
+    if len(pareto_front) < 2:
+        return 0.0  # Spread is zero if there are fewer than two solutions
+
+    # Extract objective values
+    objectives = np.array([[result.cost, result.emission, result.wait] for result in pareto_front])
+
+    # Calculate the range for each objective
+    objective_ranges = np.max(objectives, axis=0) - np.min(objectives, axis=0)
+
+    # Calculate spread for each objective
+    spread_per_objective = objective_ranges / (1.0 + objective_ranges)
+
+    # Calculate overall spread (average of spreads for each objective)
+    s_metric = np.mean(spread_per_objective)
+
+    return s_metric
+
+
+def calculate_delta(pareto_front):
+    if len(pareto_front) < 2:
+        return 0.0  # Delta is zero if there are fewer than two solutions
+
+    # Extract objective values
+    objectives = np.array([[result.cost, result.emission, result.wait] for result in pareto_front])
+
+    # Calculate the Euclidean distance between consecutive solutions
+    delta_values = np.sqrt(np.sum(np.diff(objectives, axis=0) ** 2, axis=1))
+
+    # Calculate the average Delta
+    delta_metric = np.mean(delta_values)
+
+    return delta_metric
+
+
+def read_csv(file_path):
+    data_list = []
+
+    with open(file_path, 'r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+
+        for row in csv_reader:
+            rowdata = []
+            try:
+                # Convert each element in the row to a float and append to the list
+                for item in row:
+                    rowdata.append(item)
+                data_list.append(rowdata)
+            except ValueError as e:
+                print(f"Error parsing row {row}: {e}")
+
+    return data_list
+
+
+def plot_2d_line_graph(data):
+    x_values, y_values = zip(*data)
+
+    plt.plot(x_values, y_values, marker='o', linestyle='-')
+    plt.xlabel('X-axis Label')
+    plt.ylabel('Y-axis Label')
+    plt.title('2D Line Graph')
+    plt.grid(True)
+    plt.show()
+
+
+def plot_2_graphs(data, data2):
+    x_values, y_values = zip(*data)
+    x2_values, y2_values = zip(*data2)
+    plt.plot(x_values, y_values, marker='o', linestyle='-')
+    plt.plot(x2_values, y2_values, marker='o', linestyle='-')
+    plt.xlabel('X-axis Label')
+    plt.ylabel('Y-axis Label')
+    plt.title('2D Line Graph')
+    plt.grid(True)
     plt.show()
 
 
@@ -118,7 +221,6 @@ class MOresult:
         print(list2dom, " results from MIP pareto are dominated")
         return non_dominated_ga, non_dominated_mip
 
-
     @classmethod
     def show2paretos(cls, list1, list2):
         ob1v = []
@@ -136,16 +238,15 @@ class MOresult:
             ob2v2.append(i.emission)
             ob3v2.append(i.wait)
 
-
         rcmap = matplotlib.cm.get_cmap('copper_r')
         plt.figure(figsize=(8, 6))
-        scatter = plt.scatter(ob1v, ob2v, c=ob3v, cmap=rcmap, marker='o', alpha=0.7, label='Pareto 1')
-        scatter = plt.scatter(ob1v2, ob2v2, c=ob3v2, cmap=rcmap, marker='^', alpha=0.7, label='Pareto 2')
-        cbar = plt.colorbar(scatter, label='Ride Duration', orientation='vertical')
+        scatter = plt.scatter(ob1v, ob3v, c=ob2v, cmap=rcmap, marker='o', alpha=0.7, label='20,000')
+        scatter = plt.scatter(ob1v2, ob3v2, c=ob2v2, cmap=rcmap, marker='^', alpha=0.7, label='18,000')
+        cbar = plt.colorbar(scatter, label='Emission', orientation='vertical')
         plt.xlabel('Operational cost')
         plt.legend()
-        plt.ylabel("Emission")
-        plt.title('Pareto front with colour intensity for Ride Duration')
+        plt.ylabel("Total Ride duration")
+        plt.title('Pareto front with colour intensity for Emission')
         plt.show()
 
     @staticmethod
@@ -159,20 +260,22 @@ class MOresult:
                     result.cost > other_result.cost
                     or result.emission > other_result.emission
                     or result.wait > other_result.wait
-                    )
+            )
             ):
                 return True
         return False
 
 
-
-
-
 path = "../Data/moderate/output/paretodata/"
-paretoga = MOresult.readfile(path + "GGA+100n30.csv")
-pareto = MOresult.readfile(path + "GA+100n30.csv")
+paretoga = MOresult.readfile(path + "GGA+30n1220000.csv")
+pareto = MOresult.readfile(path + "GGA+30n1218000.csv")
+#plot_2_graphs(read_csv(path + "conv30.csv"), read_csv(path + "conv50.csv"))
+print("Score ", get_score(get_best_solution(paretoga)) / 50)
+print("Spread ", calculate_spread(paretoga))
+print("Delta ", calculate_delta(paretoga))
 newpareto = MOresult.remove_duplicates(pareto)
 nondom = MOresult.non_dominated(paretoga, newpareto)
+#showpareto(paretoga)
 ndga, ndmip = MOresult.non_dominated_origins(paretoga, newpareto)
-#MOresult.show2paretos(ndga, ndmip)
-MOresult.show2paretos(paretoga, newpareto)
+MOresult.show2paretos(ndga, ndmip)
+#MOresult.show2paretos(paretoga, pareto)

@@ -25,7 +25,7 @@ smallcar = 8
 vehiclenum = bigcar + medcar + smallcar
 scenario = "moderate"
 requestnum = 50
-generations = 2000
+generations = 400
 smart = 100
 filename = "GA"
 guided = True
@@ -39,7 +39,7 @@ if smart > 0:
 
 darp = Darp.readfile("../Data/" + scenario + "/" + scenario + str(requestnum) + ".txt", bigcar, medcar, smallcar)
 darp.writefile("../Data/" + scenario + "/minizinc/" + scenario + str(requestnum) + 'n' + str(vehiclenum))
-f = open("../Data/" + scenario + "/output/" + filename + str(requestnum) + 'n' + str(vehiclenum) + ".csv", "w")
+f = open("../Data/" + scenario + "/output/" + filename + str(requestnum) + 'n' + str(vehiclenum) + str(generations) + ".csv", "w")
 moDarp = DARP(darp.n, darp.k, darp.L, darp.capacity, darp.max_r_time, darp.load, darp.service_time,
               darp.earliest_pickup, darp.latest_dropoff, darp.t_cost, darp.t_emis, darp.t_time)
 
@@ -120,9 +120,9 @@ print(" ")
 bestsolution = 10000
 index = 0
 for i in range(len(F)):
-    score1 = (res.F[i][0] / mincost) - 1
-    score2 = (res.F[i][1] / minemi) - 1
-    score3 = (res.F[i][2] / minwait) - 1
+    score1 = (res.F[i][0] / mincost)
+    score2 = (res.F[i][1] / minemi)
+    score3 = (res.F[i][2] / minwait)
     score = (score1 + score2 + score3) / 3
     if score < bestsolution:
         bestsolution = score
